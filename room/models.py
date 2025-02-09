@@ -1,3 +1,91 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
+from phonenumber_field.modelfields import PhoneNumberField
 
-# Create your models here.
+
+class UserProfile(AbstractUser):
+    age = models.PositiveSmallIntegerField(validators=[MinValueValidator(17), MaxValueValidator(88)],
+                                           null=True, blank=True)
+    phone_number = PhoneNumberField()
+    STATUS_CHOICES = (
+        ('owner', 'owner'),
+        ('client', 'client')
+    )
+
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='client')
+
+    def __str__(self):
+        return f'{self.first_name}, {self.last_name}'
+
+
+class City(models.Model):
+    city_name = models.CharField(max_length=32, unique=True)
+    image = models.ImageField(upload_to='city_photos')
+
+    def __str__(self):
+        return self.city_name
+
+class Hotel(models.Model):
+    hotel_name = models.CharField(max_length=32)
+    owner = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    city = models.ForeignKey(City, on_delete=models.CASCADE)
+    description = models.TextField()
+    hotel_image = models.ImageField(upload_to='hotel_photos')
+    stars = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)])
+
+    def __str__(self):
+        return f'{self.hotel_name}, {self.owner}'
+
+
+class Rooms(models.Model):
+    room_name = models.CharField(max_length=32)
+    room_number = models.PositiveSmallIntegerField()
+    city = models.ForeignKey(City, on_delete=models.CASCADE)
+    description = models.TextField()
+    TYPE_CHOICES = (
+        ('люкс', 'люкс'),
+        ('семейный', 'семейный'),
+        ('одноместный', 'одноместный'),
+        ('двухместный', 'двухместный'),
+    )
+    room_type = models.CharField(max_length=32, choices=TYPE_CHOICES)
+    STATUS_CHOICES = (
+        ('свободен', 'свободен'),
+        ('забронирован ', 'забронирован '),
+        ('занят', 'занят')
+    )
+    status_room = models.CharField(max_length=16, choices=STATUS_CHOICES, default='свободен')
+
+    def __str__(self):
+        return f'{self.room_name}, {self.status_room}'
+
+
+class RoomImages(models.Model):
+    room = models.ForeignKey(Rooms, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='room_photos')
+
+
+class Bron(models.Model):
+    customer = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE)
+    room = models.ForeignKey(Rooms, on_delete=models.CASCADE)
+    check_in = models.DateField()
+    check_out = models.DateField()
+
+    def __str__(self):
+        return f'{self.customer}'
+
+
+class Review(models.Model):
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    room_review = models.ForeignKey(Hotel, on_delete=models.CASCADE)
+    stars = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)], null=True, blank=True)
+    text = models.TextField()
+    created_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'text')
+
+    def __str__(self):
+        return f'{self.user}, {self.stars}'
