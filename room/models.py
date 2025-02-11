@@ -30,13 +30,22 @@ class City(models.Model):
 class Hotel(models.Model):
     hotel_name = models.CharField(max_length=32)
     owner = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    city = models.ForeignKey(City, on_delete=models.CASCADE)
+    city = models.ForeignKey(City, on_delete=models.CASCADE, related_name='city_hotel')
     description = models.TextField()
     hotel_image = models.ImageField(upload_to='hotel_photos')
     stars = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)])
 
     def __str__(self):
         return f'{self.hotel_name}, {self.owner}'
+
+
+    def get_avg_rating(self):
+        total = self.review_hotel.all()
+        if total.exists():
+            return round(sum([i.stars for i in total]) / total.count(), 1)
+
+    def get_count_people(self):
+        return self.review_hotel.count()
 
 
 class Rooms(models.Model):
@@ -61,18 +70,27 @@ class Rooms(models.Model):
     def __str__(self):
         return f'{self.room_name}, {self.status_room}'
 
+    def get_avg_rating(self):
+        total = self.review_room.all()
+        if total.exists():
+            return round(sum([i.stars for i in total]) / total.count(), 1)
+
+    def get_count_people(self):
+        return self.review_room.count()
+
 
 class RoomImages(models.Model):
-    room = models.ForeignKey(Rooms, on_delete=models.CASCADE)
+    room = models.ForeignKey(Rooms, on_delete=models.CASCADE, related_name='room_image')
     image = models.ImageField(upload_to='room_photos')
 
 
 class Bron(models.Model):
     customer = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE)
-    room = models.ForeignKey(Rooms, on_delete=models.CASCADE)
+    room = models.ForeignKey(Rooms, on_delete=models.CASCADE, related_name='room_bron')
     check_in = models.DateField()
     check_out = models.DateField()
+    price = models.PositiveSmallIntegerField()
 
     def __str__(self):
         return f'{self.customer}'
@@ -80,7 +98,8 @@ class Bron(models.Model):
 
 class Review(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    room_review = models.ForeignKey(Hotel, on_delete=models.CASCADE)
+    hotel_review = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name='review_hotel')
+    room_review = models.ForeignKey(Rooms, on_delete=models.CASCADE, related_name='review_room')
     stars = models.IntegerField(choices=[(i, str(i)) for i in range(1, 11)], null=True, blank=True)
     text = models.TextField()
     created_date = models.DateTimeField(auto_now_add=True)

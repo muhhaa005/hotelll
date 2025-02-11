@@ -10,21 +10,42 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CitySerializer(serializers.ModelSerializer):
+
+class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = City
-        fields = '__all__'
+        model = UserProfile
+        fields = ['first_name', 'last_name']
+
+class UserProfileSimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ['username', 'country']
+
 
 class HotelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Hotel
-        fields = '__all__'
+        fields = ['hotel_name']
 
 
-class RoomsSerializer(serializers.ModelSerializer):
+class HotelListSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Rooms
-        fields = '__all__'
+        model = Hotel
+        fields = ['id', 'hotel_name', 'hotel_image', 'stars']
+
+
+class CityListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = City
+        fields = [ 'id', 'city_name', 'image']
+
+class CityDetailSerializer(serializers.ModelSerializer):
+    city_hotel = HotelListSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = City
+        fields = ['city_name', 'image', 'city_hotel']
+
 
 class ImagesSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,13 +53,68 @@ class ImagesSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class RoomsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rooms
+        fields = ['room_number']
+
+
+class RoomsListSerializer(serializers.ModelSerializer):
+    room_image = ImagesSerializer(many=True, read_only=True)
+    room_name = HotelSerializer()
+
+    class Meta:
+        model = Rooms
+        fields = ['id', 'room_name', 'room_image', 'city', 'room_type']
+
+
 class BronSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bron
-        fields = '__all__'
+        fields = ['id', 'customer', 'hotel', 'room', 'check_in', 'check_out', 'price']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
-        fields = '__all__'
+        fields = ['user', 'hotel_review', 'room_review', 'text', 'stars', 'created_date']
+
+
+
+
+class HotelDetailSerializer(serializers.ModelSerializer):
+    owner = ProfileSerializer()
+    city = CityListSerializer()
+    review_hotel = ReviewSerializer(many=True, read_only=True)
+    avg_rating = serializers.SerializerMethodField()
+    count_people = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Hotel
+        fields = ['hotel_name', 'hotel_image', 'owner', 'city', 'description', 'stars', 'review_hotel', 'avg_rating', 'count_people']
+
+    def get_avg_rating(self, obj):
+        return obj.get_avg_rating()
+
+    def get_count_people(self, obj):
+        return obj.get_count_people()
+
+
+class RoomsDetailSerializer(serializers.ModelSerializer):
+    room_image = ImagesSerializer(many=True, read_only=True)
+    room_name = HotelSerializer()
+    room_bron = BronSerializer(many=True, read_only=True)
+    review_room = ReviewSerializer(many=True, read_only=True)
+    avg_rating = serializers.SerializerMethodField()
+    count_people = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Rooms
+        fields = ['room_name', 'room_image', 'room_number', 'city', 'description', 'room_type',
+                  'status_room', 'room_bron', 'review_room', 'avg_rating', 'count_people']
+
+    def get_avg_rating(self, obj):
+        return obj.get_avg_rating()
+
+    def get_count_people(self, obj):
+        return obj.get_count_people()

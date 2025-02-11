@@ -1,21 +1,33 @@
+
 from .views import (
-                    UserProfileViewSet, CityViewSet, HotelViewSet,
-                    RoomsViewSet, BronViewSet, ReviewViewSet,
+    UserProfileListAPIView, UserProfileEditAPIView, CityListAPIView, CityDetailAPIView, HotelListAPIView, HotelDetailAPIView,
+    RoomsListAPIView, RoomsDetailAPIView, BronViewSet, ReviewCreateAPIView,
 )
 
 from django.urls import path, include
 from rest_framework import routers
 
 
-router = routers.DefaultRouter()
-router.register(r'users', UserProfileViewSet, basename='user_list')
-router.register(r'city', CityViewSet, basename='city_list')
-router.register(r'hotel', HotelViewSet, basename='hotel_list')
-router.register(r'room', RoomsViewSet, basename='room_list')
+router = routers.SimpleRouter()
 router.register(r'bron', BronViewSet, basename='bron_list')
-router.register(r'review', ReviewViewSet, basename='review_list')
+
 
 
 urlpatterns = [
     path('', include(router.urls)),
+
+    path('users/', UserProfileListAPIView.as_view(), name='user_list'),
+    path('users/<int:pk>/', UserProfileEditAPIView.as_view(), name='user_edit'),
+
+    path('hotel/', HotelListAPIView.as_view(), name='hotel_list'),
+    path('hotel/<int:pk>/', HotelDetailAPIView.as_view(), name='hotel_detail'),
+
+    path('city/', CityListAPIView.as_view(), name='city_list'),
+    path('city/<int:pk>/', CityDetailAPIView.as_view(), name='city_detail'),
+
+    path('room/', RoomsListAPIView.as_view(), name='room_list'),
+    path('room/<int:pk>/', RoomsDetailAPIView.as_view(), name='room_detail'),
+
+    path('review/', ReviewCreateAPIView.as_view(), name='review_list'),
+
 ]
