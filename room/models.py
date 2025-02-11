@@ -14,6 +14,7 @@ class UserProfile(AbstractUser):
     )
 
     status = models.CharField(max_length=16, choices=STATUS_CHOICES, default='client')
+    country = models.CharField(max_length=32, default='не указано')
 
     def __str__(self):
         return f'{self.first_name}, {self.last_name}'
@@ -39,7 +40,7 @@ class Hotel(models.Model):
 
 
 class Rooms(models.Model):
-    room_name = models.CharField(max_length=32)
+    room_name = models.ForeignKey(Hotel, on_delete=models.CASCADE)
     room_number = models.PositiveSmallIntegerField()
     city = models.ForeignKey(City, on_delete=models.CASCADE)
     description = models.TextField()
@@ -80,7 +81,7 @@ class Bron(models.Model):
 class Review(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     room_review = models.ForeignKey(Hotel, on_delete=models.CASCADE)
-    stars = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)], null=True, blank=True)
+    stars = models.IntegerField(choices=[(i, str(i)) for i in range(1, 11)], null=True, blank=True)
     text = models.TextField()
     created_date = models.DateTimeField(auto_now_add=True)
 
